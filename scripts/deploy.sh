@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Serialize the mail cutover with main-site deployments that edit or reload
-# the shared OpenResty configuration.
-exec 9>/tmp/hanasand-full-deploy.lock
-flock -x 9
-
 repo_root="$(git rev-parse --show-toplevel)"
 revision="$(git -C "$repo_root" rev-parse HEAD)"
 config="${HANASAND_MAIL_NGINX_CONFIG:-/home/hanasand/openresty/nginx/conf.d/default.conf}"
@@ -16,6 +11,32 @@ if [[ ! -f "$config" ]]; then
     echo "OpenResty config not found: $config" >&2
     exit 1
 fi
+if [[ "$(git -C "$repo_root" branch --show-current)" != main ]]; then
+    echo 'Deploy the mail app from main.' >&2
+    exit 1
+fi
+if [[ -n "$(git -C "$repo_root" status --porcelain)" ]]; then
+    echo 'The mail app checkout must be clean before deployment.' >&2
+    exit 1
+fi
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+    docker build --pull -t "$image" "$repo_root"
+fi
+docker rm -f "$candidate" >/dev/null 2>&1 || true
+docker run -d --name "$candidate" --restart unless-stopped --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m --memory 512m --cpus 1 -p 127.0.0.1:3021:3000 "$image" >/dev/null
+cleanup() { docker rm -f "$candidate" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+for attempt in $(seq 1 40); do
+    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:3021/health | grep -q '"service":"hanasand-mail"'; then break; fi
+    if [[ "$attempt" == 40 ]]; then docker logs "$candidate" >&2; exit 1; fi
+    sleep 2
+done
+
+# Build and verify the candidate before waiting on the shared deploy lock.
+# Only the production switch needs to serialize with the main-site proxy reload.
+exec 9>/tmp/hanasand-full-deploy.lock
+flock -x 9
+
 active_port="$(python3 - "$config" <<'PYPORT'
 from pathlib import Path
 import re, sys
@@ -31,25 +52,6 @@ print(proxy.group(1))
 PYPORT
 )"
 if [[ "$active_port" == 3010 ]]; then port=3011; else port=3010; fi
-
-if [[ "$(git -C "$repo_root" branch --show-current)" != main ]]; then
-    echo 'Deploy the mail app from main.' >&2
-    exit 1
-fi
-if [[ -n "$(git -C "$repo_root" status --porcelain)" ]]; then
-    echo 'The mail app checkout must be clean before deployment.' >&2
-    exit 1
-fi
-docker build --pull -t "$image" "$repo_root"
-docker rm -f "$candidate" >/dev/null 2>&1 || true
-docker run -d --name "$candidate" --restart unless-stopped --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m --memory 512m --cpus 1 -p 127.0.0.1:3021:3000 "$image" >/dev/null
-cleanup() { docker rm -f "$candidate" >/dev/null 2>&1 || true; }
-trap cleanup EXIT
-for attempt in $(seq 1 40); do
-    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:3021/health | grep -q '"service":"hanasand-mail"'; then break; fi
-    if [[ "$attempt" == 40 ]]; then docker logs "$candidate" >&2; exit 1; fi
-    sleep 2
-done
 
 docker rm -f "$candidate" >/dev/null
 trap - EXIT
