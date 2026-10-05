@@ -268,20 +268,3 @@ export function arrayBufferToBase64(buffer: ArrayBuffer) {
     }
     return btoa(binary)
 }
-
-export function MailSketch() {
-    return (
-        <svg className='pointer-events-none absolute -right-6 bottom-2 h-auto w-44 rotate-[1.5deg] text-ui-muted/20' viewBox='0 0 430 190' aria-hidden='true'>
-            <path fill='none' stroke='currentColor' strokeWidth='1.15' strokeLinecap='round' strokeLinejoin='round' d='M31 154 L31 90 L112 63 L197 93 L197 154' />
-            <path fill='none' stroke='currentColor' strokeWidth='1.15' strokeLinecap='round' strokeLinejoin='round' d='M31 90 L112 44 L197 93' />
-            <path fill='none' stroke='currentColor' strokeWidth='1.15' strokeLinecap='round' strokeLinejoin='round' d='M112 44 L112 154' />
-            <path fill='none' stroke='currentColor' strokeWidth='1.15' strokeLinecap='round' strokeLinejoin='round' d='M62 154 V101 H92 V154' />
-            <path fill='none' stroke='currentColor' strokeWidth='1.15' strokeLinecap='round' strokeLinejoin='round' d='M128 154 V111 H180 V154' />
-            <path fill='none' stroke='currentColor' strokeWidth='0.95' strokeLinecap='round' strokeLinejoin='round' d='M225 147 L225 88 L282 62 L340 88 L340 147' />
-            <path fill='none' stroke='currentColor' strokeWidth='0.95' strokeLinecap='round' strokeLinejoin='round' d='M225 88 L282 36 L340 88' />
-            <path fill='none' stroke='currentColor' strokeWidth='0.95' strokeLinecap='round' strokeLinejoin='round' d='M250 147 V101 H316 V147' />
-            <path fill='none' stroke='currentColor' strokeWidth='0.95' strokeLinecap='round' strokeLinejoin='round' d='M351 151 V100 L382 81 L414 100 V151' />
-            <path fill='none' stroke='currentColor' strokeOpacity='0.55' strokeWidth='0.85' strokeLinecap='round' strokeLinejoin='round' d='M16 171 C67 162 102 178 153 167 C204 156 238 174 291 164 C331 156 366 168 419 160' />
-        </svg>
-    )
-}

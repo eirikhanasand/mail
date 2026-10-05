@@ -37,7 +37,6 @@ import { Composer, MessageRow, type MailQuickAction } from './mailWorkspaceParts
 import {
     ActionIconButton,
     AttachmentPreview,
-    MailSketch,
     buildMailFrameHtml,
     composeFromReply,
     emptyComposer,
@@ -403,7 +402,6 @@ export default function MailWorkspace({ mailboxUser }: Props) {
                 <aside
                     className={`${dashboardPanelClass} relative overflow-hidden p-3 xl:min-h-0 xl:overflow-y-auto`}
                 >
-                    <MailSketch />
                     <div className='relative z-10'>
                         <div className='flex items-center justify-between pb-2'>
                             <div className='min-w-0'>
