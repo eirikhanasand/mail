@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import MailWorkspace from '@/components/mail/mailWorkspace'
+import MailAppChrome from '@/components/layout/mailAppChrome'
 
 export default async function Page(props: { searchParams: Promise<{ mailboxUser?: string }> }) {
     const cookieStore = await cookies()
@@ -8,5 +9,5 @@ export default async function Page(props: { searchParams: Promise<{ mailboxUser?
         return redirect('https://hanasand.com/dashboard/mail')
     }
     const searchParams = await props.searchParams
-    return <MailWorkspace mailboxUser={searchParams.mailboxUser || null} />
+    return <MailAppChrome><MailWorkspace mailboxUser={searchParams.mailboxUser || null} /></MailAppChrome>
 }
