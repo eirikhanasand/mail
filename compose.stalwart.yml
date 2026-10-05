@@ -1,0 +1,35 @@
+services:
+  stalwart:
+    container_name: hanasand_mail
+    image: hanasand_stalwart
+    build:
+      context: ./stalwart
+      dockerfile: Dockerfile
+    command: ["--config", "/opt/stalwart/etc/config.json"]
+    mem_limit: 1g
+    cpus: "2.0"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/healthz/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ${HANASAND_STALWART_STATE_DIR:-/home/hanasand/hanasand/mail/stalwart}:/opt/stalwart
+    ports:
+      - "127.0.0.1:${MAIL_HTTP_LOCAL_PORT:-8081}:8080"
+      - "127.0.0.1:${MAIL_SMTP_LOCAL_PORT:-2525}:25"
+      - "127.0.0.1:${MAIL_SMTPS_LOCAL_PORT:-2465}:465"
+      - "127.0.0.1:${MAIL_SUBMISSION_LOCAL_PORT:-2587}:587"
+      - "127.0.0.1:${MAIL_IMAP_LOCAL_PORT:-2143}:143"
+      - "127.0.0.1:${MAIL_IMAPS_LOCAL_PORT:-2993}:993"
+      - "127.0.0.1:${MAIL_MANAGESIEVE_LOCAL_PORT:-4191}:4190"
+    networks:
+      hanasandnet:
+        aliases: [stalwart]
+
+networks:
+  hanasandnet:
+    external: true
+    name: ${HANASAND_SHARED_NETWORK:-hanasand_hanasandnet}
