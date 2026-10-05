@@ -17,4 +17,5 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 USER bun
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["bun", "-e", "fetch('http://127.0.0.1:3000/health').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
 CMD ["bun", "server.js"]
