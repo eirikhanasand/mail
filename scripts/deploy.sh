@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Serialize the mail cutover with main-site deployments that edit or reload
+# the shared OpenResty configuration.
+exec 9>/tmp/hanasand-full-deploy.lock
+flock -x 9
+
 repo_root="$(git rev-parse --show-toplevel)"
 revision="$(git -C "$repo_root" rev-parse HEAD)"
 config="${HANASAND_MAIL_NGINX_CONFIG:-/home/hanasand/openresty/nginx/conf.d/default.conf}"
@@ -81,7 +86,7 @@ if ! docker exec openresty /usr/local/openresty/bin/openresty -t >/dev/null; the
     exit 1
 fi
 docker exec openresty /usr/local/openresty/bin/openresty -s reload
-if ! curl --fail --silent --show-error --max-time 10 https://mail.hanasand.com/health | grep -q '"service":"hanasand-mail"'; then
+if ! curl --fail --silent --show-error --max-time 10 --resolve mail.hanasand.com:443:127.0.0.1 https://mail.hanasand.com/health | grep -q '"service":"hanasand-mail"'; then
     cp -p "$backup" "$config"
     docker exec openresty /usr/local/openresty/bin/openresty -t >/dev/null
     docker exec openresty /usr/local/openresty/bin/openresty -s reload >/dev/null
