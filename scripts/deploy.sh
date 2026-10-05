@@ -88,7 +88,15 @@ if ! docker exec openresty /usr/local/openresty/bin/openresty -t >/dev/null; the
     exit 1
 fi
 docker exec openresty /usr/local/openresty/bin/openresty -s reload
-if ! curl --fail --silent --show-error --max-time 10 --resolve mail.hanasand.com:443:127.0.0.1 https://mail.hanasand.com/health | grep -q '"service":"hanasand-mail"'; then
+mail_route_ready=false
+for attempt in $(seq 1 20); do
+    if curl --fail --silent --max-time 5 --resolve mail.hanasand.com:443:127.0.0.1 https://mail.hanasand.com/health | grep -q '"service":"hanasand-mail"'; then
+        mail_route_ready=true
+        break
+    fi
+    sleep 1
+done
+if [[ "$mail_route_ready" != true ]]; then
     cp -p "$backup" "$config"
     docker exec openresty /usr/local/openresty/bin/openresty -t >/dev/null
     docker exec openresty /usr/local/openresty/bin/openresty -s reload >/dev/null
