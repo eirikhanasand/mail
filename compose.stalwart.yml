@@ -19,8 +19,6 @@ services:
       - ${HANASAND_STALWART_STATE_DIR:-/home/hanasand/hanasand/mail/stalwart}:/opt/stalwart
     ports:
       - "127.0.0.1:${MAIL_HTTP_LOCAL_PORT:-8081}:8080"
-      # Only containers on the shared Docker bridge can reach the JMAP API.
-      - "${HANASAND_DOCKER_GATEWAY:-172.20.0.1}:${MAIL_HTTP_BRIDGE_PORT:-18082}:8080"
       - "127.0.0.1:${MAIL_SMTP_LOCAL_PORT:-2525}:25"
       - "127.0.0.1:${MAIL_SMTPS_LOCAL_PORT:-2465}:465"
       - "127.0.0.1:${MAIL_SUBMISSION_LOCAL_PORT:-2587}:587"
