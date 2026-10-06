@@ -169,6 +169,7 @@ export default function MailWorkspace({ mailboxUser }: Props) {
                 || null
             selection.current = { user: next.mailboxUser, mailbox: next.selectedMailboxId, message: nextSelectedMessageId }
             setSelectedMessageId(nextSelectedMessageId)
+            setError('')
             setBackgroundIssue('')
             setUnreachableSince(null)
             setLastSuccessAt(Date.now())
@@ -335,7 +336,7 @@ export default function MailWorkspace({ mailboxUser }: Props) {
     const showUnreachableWarning = Boolean(unreachableSince && now - unreachableSince >= STALE_AFTER_MS)
 
     return (
-        <DashboardPage className='!gap-4 !px-2 !py-4 xl:flex xl:h-full xl:min-h-0 xl:flex-col'>
+        <DashboardPage style={{ display: 'flex', height: '100%', minHeight: 0, flexDirection: 'column' }} className='@container !gap-4 !px-2 !py-4'>
             <DashboardPanel className='flex shrink-0 flex-wrap items-center gap-2 p-2.5 sm:p-3' id='mail-toolbar'>
                 <div className='flex min-w-0 flex-1 flex-wrap items-center gap-2'>
                     <div className='mr-auto flex h-8 min-w-0 flex-col justify-center'>
@@ -395,12 +396,14 @@ export default function MailWorkspace({ mailboxUser }: Props) {
             )}
 
             {showUnreachableWarning && backgroundIssue && (
-                <ErrorNotice compact message={`Background sync paused. Last successful update was ${formatRelativeTime(lastSuccessAt!, now)} ago.`} />
+                <ErrorNotice compact message={lastSuccessAt
+                    ? `Background sync paused. Last successful update was ${formatRelativeTime(lastSuccessAt, now)} ago.`
+                    : 'Background sync paused. No successful update yet.'} />
             )}
 
-            <div className={`grid min-w-0 grid-cols-1 gap-4 xl:min-h-0 xl:flex-1 ${sidebarCompact ? 'xl:grid-cols-[80px_minmax(0,1fr)]' : 'xl:grid-cols-[220px_minmax(0,1fr)]'}`}>
+            <div className={`grid min-w-0 grid-cols-1 gap-4 @3xl:min-h-0 @3xl:flex-1 ${sidebarCompact ? '@3xl:grid-cols-[80px_minmax(0,1fr)]' : '@3xl:grid-cols-[220px_minmax(0,1fr)]'}`}>
                 <aside
-                    className={`${dashboardPanelClass} relative overflow-hidden p-3 xl:min-h-0 xl:overflow-y-auto`}
+                    className={`${dashboardPanelClass} relative overflow-hidden p-3 @3xl:min-h-0 @3xl:overflow-y-auto`}
                 >
                     <div className='relative z-10'>
                         <div className='flex items-center justify-between pb-2'>
@@ -483,7 +486,7 @@ export default function MailWorkspace({ mailboxUser }: Props) {
                     </div>
                 </aside>
 
-                {!readingMessage && <section data-mail-message-list className={`${dashboardPanelClass} min-w-0 p-2.5 xl:min-h-0 xl:overflow-y-auto`}>
+                {!readingMessage && <section data-mail-message-list className={`${dashboardPanelClass} min-w-0 p-2.5 @3xl:min-h-0 @3xl:overflow-y-auto`}>
                     <div className='flex items-center gap-2 px-1 pb-2 text-[10px] tracking-normal text-ui-muted'>
                         <span>{overview?.mailboxes.find(mailbox => mailbox.id === selectedMailboxId)?.name || 'Mailbox'}</span>
                         <span className='text-ui-muted'>•</span>
@@ -567,7 +570,7 @@ export default function MailWorkspace({ mailboxUser }: Props) {
                     </div>
                 </section>}
 
-                {readingMessage && <section ref={reader} data-mail-message-reader className={`${dashboardPanelClass} min-w-0 p-3 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto`}>
+                {readingMessage && <section ref={reader} data-mail-message-reader className={`${dashboardPanelClass} min-w-0 p-3 @3xl:flex @3xl:min-h-0 @3xl:flex-col @3xl:overflow-y-auto`}>
                     <button type='button' className={`${toolbarButton} mb-2 shrink-0 self-start`} onClick={() => setReadingMessage(false)}><ArrowLeft className='h-4 w-4' />Back to {overview?.mailboxes.find(mailbox => mailbox.id === selectedMailboxId)?.name || 'inbox'}</button>
                     {loading && <div role='status' className='px-2 py-6 text-xs text-ui-muted'>Loading message…</div>}
                     {!loading && !selectedMessage && <div className='rounded-lg border border-dashed border-ui-border px-4 py-8 text-xs text-ui-muted'>This message is unavailable. Return to the list or try opening it again.</div>}
@@ -616,12 +619,12 @@ export default function MailWorkspace({ mailboxUser }: Props) {
                                 <iframe
                                     title='HTML mail'
                                     style={{ colorScheme: mailTheme, background: 'transparent' }}
-                                    className='h-72 w-full shrink-0 rounded-lg border border-ui-border xl:min-h-40 xl:flex-1'
+                                    className='h-72 w-full shrink-0 rounded-lg border border-ui-border @3xl:min-h-40 @3xl:flex-1'
                                     sandbox='allow-popups allow-popups-to-escape-sandbox'
                                     srcDoc={renderedHtml}
                                 />
                             ) : selectedMessage.textBody ? (
-                                <article className='min-w-0 wrap-anywhere rounded-lg border border-ui-border px-4 py-3 xl:min-h-40 xl:flex-1 xl:overflow-y-auto text-xs leading-5 whitespace-pre-wrap text-ui-text'>
+                                <article className='min-w-0 wrap-anywhere rounded-lg border border-ui-border px-4 py-3 @3xl:min-h-40 @3xl:flex-1 @3xl:overflow-y-auto text-xs leading-5 whitespace-pre-wrap text-ui-text'>
                                     {selectedMessage.textBody}
                                 </article>
                             ) : null}
