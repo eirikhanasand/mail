@@ -52,6 +52,7 @@ class SmtpConnection {
         this.socket = tlsConnect({ socket: this.socket, servername: serverName, rejectUnauthorized: true })
         this.socket.setEncoding('utf8')
         this.socket.on('data', (chunk: string) => { this.buffer += chunk; this.flush() })
+        this.socket.setTimeout(5000, () => this.socket.destroy(new Error('SMTP timeout')))
         return new Promise<void>((resolve, reject) => { this.socket.once('secureConnect', resolve); this.socket.once('error', reject) })
     }
 }
