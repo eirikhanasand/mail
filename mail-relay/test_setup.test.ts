@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { COMPOSE_FILE, composeCommand, mailAdmin, parseAdmin, parseLastJsonLine, prepareLegacyContainer } from './setup.ts'
+import { COMPOSE_FILE, composeCommand, hasApiErrors, mailAdmin, parseAdmin, parseLastJsonLine, prepareLegacyContainer } from './setup.ts'
 
 const config = '[authentication.fallback-admin]\nuser = "relay-admin"\nsecret = "test-secret"\n'
 const current = (source = '/new/health', image = 'health:old') => ({ Config: { Image: image, Labels: {} }, Mounts: [{ Source: source, Destination: '/run/config' }],
@@ -24,6 +24,12 @@ describe('mail relay setup', () => {
     test('reads API sender settings after runtime startup output', () => {
         expect(parseLastJsonLine('◇ bun v1.3.13\n{"user":"mailer"}\n')).toEqual({ user: 'mailer' })
         expect(() => parseLastJsonLine('◇ bun v1.3.13')).toThrow('did not return JSON')
+    })
+
+    test('treats empty Stalwart reload error collections as success', () => {
+        expect(hasApiErrors({ data: { errors: {} } })).toBe(false)
+        expect(hasApiErrors({ data: { errors: [] } })).toBe(false)
+        expect(hasApiErrors({ data: { errors: { 'server.listener': 'invalid' } } })).toBe(true)
     })
 
     test('removes a matching legacy container before Compose adopts its stable name', () => {

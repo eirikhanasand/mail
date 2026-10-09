@@ -66,6 +66,12 @@ export async function ensurePrincipal(base: string, admin: any, principal: any) 
     if (!(await api(base, admin.user, admin.secret, `/principal/${principal.name}`)).data)
         await api(base, admin.user, admin.secret, '/principal', principal)
 }
+export function hasApiErrors(result: any) {
+    const errors = result?.data?.errors
+    if (!errors) return false
+    if (Array.isArray(errors) || typeof errors === 'object') return Object.keys(errors).length > 0
+    return true
+}
 
 export function composeCommand(site: 'ovh' | 'inspur', args: string[]) {
     return ['docker', 'compose', '--project-name', `hanasand-mail-relay-${site}`, '--file', COMPOSE_FILE,
@@ -107,7 +113,7 @@ export async function refreshOvhCertificate() {
     refreshTls()
     if (!previous.equals(readFileSync(path.join(ROOT, 'tls/fullchain.pem')))) {
         const result = await api('http://127.0.0.1:18081', 'admin', credentials().admin, '/reload/certificate')
-        if (result.data?.errors) throw new Error('Relay certificate reload failed')
+        if (hasApiErrors(result)) throw new Error('Relay certificate reload failed')
         console.log('Relay TLS certificate renewed and reloaded.')
     }
 }
@@ -146,7 +152,7 @@ export async function activateInspur() {
     await call('/settings', [{ type: 'clear', prefix: 'queue.strategy.route' }, { type: 'clear', prefix: 'queue.strategy.tls' },
         { type: 'insert', assert_empty: false, prefix: null, values: Object.entries(values) }])
     const result = await call('/reload')
-    if (result.data?.errors) throw new Error('Relay configuration reload failed')
+    if (hasApiErrors(result)) throw new Error('Relay configuration reload failed')
     console.log('All mailboxes use the authenticated OVH relay for external delivery with required TLS; local delivery is preserved.')
 }
 
@@ -220,7 +226,7 @@ export async function configureGateway(site: 'ovh' | 'inspur') {
             ['session.auth.must-match-sender.0.then', 'false'], ['session.auth.must-match-sender.1.else', 'true']] },
     ])
     const result = await api('http://127.0.0.1:18081', 'admin', saved.admin, '/reload')
-    if (result.data?.errors) throw new Error('Relay configuration reload failed')
+    if (hasApiErrors(result)) throw new Error('Relay configuration reload failed')
     const configFile = path.join(ROOT, 'gateway.cfg')
     writeSecret(configFile, readFileSync(path.join(REPO_ROOT, 'mail-relay/gateway.cfg'), 'utf8'))
     chmodSync(configFile, 0o644)
