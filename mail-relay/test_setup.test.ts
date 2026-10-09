@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { COMPOSE_FILE, composeCommand, mailAdmin, parseAdmin, prepareLegacyContainer } from './setup.ts'
+import { COMPOSE_FILE, composeCommand, mailAdmin, parseAdmin, parseLastJsonLine, prepareLegacyContainer } from './setup.ts'
 
 const config = '[authentication.fallback-admin]\nuser = "relay-admin"\nsecret = "test-secret"\n'
 const current = (source = '/new/health', image = 'health:old') => ({ Config: { Image: image, Labels: {} }, Mounts: [{ Source: source, Destination: '/run/config' }],
@@ -19,6 +19,11 @@ describe('mail relay setup', () => {
             'docker', 'compose', '--project-name', 'hanasand-mail-relay-inspur', '--file', COMPOSE_FILE,
             '--profile', 'relay-inspur', 'up', '-d', '--build', 'relay-health-inspur',
         ])
+    })
+
+    test('reads API sender settings after runtime startup output', () => {
+        expect(parseLastJsonLine('◇ bun v1.3.13\n{"user":"mailer"}\n')).toEqual({ user: 'mailer' })
+        expect(() => parseLastJsonLine('◇ bun v1.3.13')).toThrow('did not return JSON')
     })
 
     test('removes a matching legacy container before Compose adopts its stable name', () => {

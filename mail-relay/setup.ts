@@ -74,6 +74,12 @@ export function composeCommand(site: 'ovh' | 'inspur', args: string[]) {
 export function compose(site: 'ovh' | 'inspur', args: string[], env: NodeJS.ProcessEnv = {}) {
     run(composeCommand(site, args), { env: { ...process.env, HANASAND_MAIL_RELAY_ROOT: ROOT, ...env } })
 }
+export function parseLastJsonLine(output: string) {
+    for (const line of output.trim().split(/\r?\n/).reverse()) {
+        try { return JSON.parse(line) } catch { /* Skip Bun startup output and unrelated logs. */ }
+    }
+    throw new Error('API sender settings did not return JSON')
+}
 export function prepareLegacyContainer(name: string, expectedMounts: string[], expectedImage?: string, dependencies: any = {}) {
     const exists = dependencies.exists || ((container: string) => spawnSync('docker', ['inspect', container], { stdio: 'ignore' }).status === 0)
     if (!exists(name)) return undefined
@@ -174,7 +180,7 @@ export async function setupInspur(image: string, apiContainer: string) {
     await ensurePrincipal(base, admin, { type: 'individual', name: 'relay-health', secrets: [saved.health], roles: [], enabledPermissions: ['authenticate', 'message-queue-list', 'message-queue-get'] })
     await api(base, 'relay-health', saved.health, '/queue/messages?limit=1')
     const javascript = 'import {systemSenderAccess} from "./src/utils/mail/system.ts";console.log(JSON.stringify(systemSenderAccess()));process.exit(0);'
-    const sender = JSON.parse(execFileSync('docker', ['exec', apiContainer, 'bun', '-e', javascript], { encoding: 'utf8' }))
+    const sender = parseLastJsonLine(execFileSync('docker', ['exec', apiContainer, 'bun', '-e', javascript], { encoding: 'utf8' }))
     const settings = { site: 'inspur', smtp: { host: 'stalwart', port: 587, serverName: 'mail.hanasand.com', ...sender },
         relay: { host: '127.0.0.1', port: 1587, serverName: 'smtp-relay.hanasand.com', username: 'inspur-relay', password: relay.relay },
         queue: { url: 'http://stalwart:8080', username: 'relay-health', password: saved.health } }
