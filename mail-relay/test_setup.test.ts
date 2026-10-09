@@ -8,6 +8,7 @@ const current = (source = '/new/health', image = 'health:old') => ({ Config: { I
 describe('mail relay setup', () => {
     test('reads fallback admin credentials from Stalwart TOML, including private-container fallback', () => {
         expect(parseAdmin(config)).toEqual({ user: 'relay-admin', secret: 'test-secret' })
+        expect(parseAdmin('authentication.fallback-admin.secret = "dotted-secret"\nauthentication.fallback-admin.user = "dotted-admin"\n')).toEqual({ user: 'dotted-admin', secret: 'dotted-secret' })
         const readContainer = () => config
         expect(mailAdmin('/private/config.toml', () => { throw Object.assign(new Error('denied'), { code: 'EACCES' }) }, readContainer)).toEqual({ user: 'relay-admin', secret: 'test-secret' })
         expect(() => parseAdmin('[authentication]\nuser = "missing"')).toThrow('fallback-admin')

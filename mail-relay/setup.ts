@@ -34,11 +34,11 @@ export function credentials() {
 }
 export function parseAdmin(toml: string) {
     const sectionStart = toml.indexOf('[authentication.fallback-admin]')
-    if (sectionStart < 0) throw new Error('Stalwart fallback-admin is not configured')
-    const rest = toml.slice(sectionStart + '[authentication.fallback-admin]'.length)
-    const section = rest.slice(0, rest.search(/^\s*\[/m) < 0 ? undefined : rest.search(/^\s*\[/m))
+    const section = sectionStart < 0 ? undefined : toml.slice(sectionStart + '[authentication.fallback-admin]'.length).split(/^\s*\[/m, 1)[0]
     const read = (key: string) => {
-        const match = section.match(new RegExp(`^${key}\\s*=\\s*("(?:\\\\.|[^"\\\\])*"|'[^']*')\\s*$`, 'm'))
+        const prefix = section === undefined ? 'authentication.fallback-admin.' : ''
+        const source = section ?? toml
+        const match = source.match(new RegExp(`^${prefix}${key}\\s*=\\s*("(?:\\\\.|[^"\\\\])*"|'[^']*')\\s*$`, 'm'))
         if (!match) throw new Error(`Stalwart fallback-admin ${key} is missing`)
         return match[1].startsWith('"') ? JSON.parse(match[1]) : match[1].slice(1, -1)
     }
